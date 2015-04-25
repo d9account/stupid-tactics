@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour {
     private GameObject selectedPlayerUnit;
     private GameState state;
 
+    public float PlayerMovementSpeed = 2.0F;
+
 	// Use this for initialization
 	void Start () {
 
@@ -73,11 +75,11 @@ public class GameManager : MonoBehaviour {
     private Vector3 playerFrom;
     private Vector3 playerTo;
     private float playerMovingTime;
+    private float playerMovingFactor;
 
     void Update()
     {
         CameraMotionUpdate();
-
 
         switch (state)
         {
@@ -96,6 +98,8 @@ public class GameManager : MonoBehaviour {
 
                     playerFrom = selectedPlayerUnit.transform.position;
                     playerTo = new Vector3(hoverTile.transform.position.x, selectedPlayerUnit.transform.position.y, hoverTile.transform.position.z);
+
+                    playerMovingFactor = PlayerMovementSpeed / (playerTo - playerFrom).magnitude;
                 }
 
                 if (!mouseDown)
@@ -119,7 +123,7 @@ public class GameManager : MonoBehaviour {
             }
             case GameState.PLAYER_MOVING:
             {
-                playerMovingTime += Time.deltaTime;
+                playerMovingTime += Time.deltaTime*playerMovingFactor;
                 selectedPlayerUnit.transform.position = Vector3.Lerp(playerFrom,
                                                                      playerTo,
                                                                      playerMovingTime);
