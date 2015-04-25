@@ -23,8 +23,16 @@ public class GameManager : MonoBehaviour {
             return;
         }
 
+	
+		GameObject[] tileBlocks = GameObject.FindGameObjectsWithTag("tile");
+			
+		foreach (GameObject tile in tileBlocks) {
+			tiles.Add(tile);
+		}
+
+
         // create the default map
-        for (int l = 0; l < default_length; ++l)
+        /*for (int l = 0; l < default_length; ++l)
         {
             for (int w = 0; w < default_width; ++w)
             {
@@ -34,7 +42,7 @@ public class GameManager : MonoBehaviour {
                 tiles.Add(tile);
             }
         }
-
+		*/
         // place the player at 50, 50
         GameObject playerUnit = Instantiate(PlayerUnitPrefab,
                                             new Vector3(5.0F, 1.2F, 5.0F),
