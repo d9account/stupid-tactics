@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
+enum GameState { INSPECTING, PLAYER_MOVING };
+
 public class GameManager : MonoBehaviour {
 
     public int default_width = 10;
@@ -11,9 +13,21 @@ public class GameManager : MonoBehaviour {
     List<GameObject> tiles = new List<GameObject>();
 
     private GameObject selectedPlayerUnit;
+    private GameState state;
 
 	// Use this for initialization
 	void Start () {
+
+        // This is to be used with the final level
+        //GameObject[] tileBlocks = GameObject.FindGameObjectsWithTag("tile");
+            
+        //foreach (GameObject tile in tileBlocks) {
+        //    tiles.Add(tile);
+        //}
+        
+
+        state = GameState.INSPECTING;
+
         Object TilePrefab = Resources.Load("Tile", typeof(GameObject));
         Object PlayerUnitPrefab = Resources.Load("PlayerUnit", typeof(GameObject));
 
@@ -55,57 +69,71 @@ public class GameManager : MonoBehaviour {
 
     private GameObject hoverTile;
     private bool mouseDown;
+
+    private Vector3 playerFrom;
+    private Vector3 playerTo;
+    private float playerMovingTime;
+
     void Update()
     {
         CameraMotionUpdate();
 
-        // This is the ray casting bit to detect which object is hit
-        if (Input.GetMouseButtonDown(0))
-        {
-            hoverTile.GetComponent<Renderer>().material.color = Color.cyan;
-            mouseDown = true;
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            mouseDown = false;
-            Vector3 from = selectedPlayerUnit.transform.position;
-            Vector3 to = hoverTile.transform.position;
-            to.y = from.y;
-            selectedPlayerUnit.transform.position = Vector3.Lerp(from,
-                                                      to,
-                                                      1.0F);
 
-        }
-        
-        if(!mouseDown)
+        switch (state)
         {
-            Ray hitRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(hitRay, out hit))
+            case GameState.INSPECTING:
             {
-                if (hoverTile)
+                // This is the ray casting bit to detect which object is hit
+                if (Input.GetMouseButtonDown(0))
                 {
-                    hoverTile.GetComponent<Renderer>().material.color = Color.white;
+                    hoverTile.GetComponent<Renderer>().material.color = Color.cyan;
+                    mouseDown = true;
+                }
+                else if (Input.GetMouseButtonUp(0))
+                {
+                    mouseDown = false;
+                    state = GameState.PLAYER_MOVING;
+
+                    playerFrom = selectedPlayerUnit.transform.position;
+                    playerTo = new Vector3(hoverTile.transform.position.x, selectedPlayerUnit.transform.position.y, hoverTile.transform.position.z);
                 }
 
-                GameObject hitObj = hit.collider.gameObject;
-                //Mesh mesh = hitObj.GetComponent<MeshFilter>().mesh;
-                //Vector3[] verts = mesh.vertices;
-                //Color[] colors = new Color[verts.Length];
+                if (!mouseDown)
+                {
+                    Ray hitRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    RaycastHit hit;
+                    if (Physics.Raycast(hitRay, out hit))
+                    {
+                        if (hoverTile)
+                        {
+                            hoverTile.GetComponent<Renderer>().material.color = Color.white;
+                        }
 
-                //for (var i = 0; i < verts.Length; i++)
-                //{
-                //    colors[i] = new Color(1.0F, 0.0F, 1.0F, 1.0F);
-                //}
-                //mesh.colors = colors;
-                //mesh.RecalculateNormals();
+                        GameObject hitObj = hit.collider.gameObject;
+                        hitObj.GetComponent<Renderer>().material.color = Color.red;
+                        hoverTile = hitObj;
+                    }
+                }
 
-                hitObj.GetComponent<Renderer>().material.color = Color.red;
-                hoverTile = hitObj;
+                break;
+            }
+            case GameState.PLAYER_MOVING:
+            {
+                playerMovingTime += Time.deltaTime;
+                selectedPlayerUnit.transform.position = Vector3.Lerp(playerFrom,
+                                                                     playerTo,
+                                                                     playerMovingTime);
+
+                if (playerMovingTime >= 1.0F)
+                {
+                    playerMovingTime = 0.0F;
+                    state = GameState.INSPECTING;
+                }
+
+                break;
             }
         }
 	}
-
 
     private Vector3 LastMousePos;
     private bool mousePanning;
